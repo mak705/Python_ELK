@@ -1,0 +1,450 @@
+curl http://localhost:9200
+kibana.yml
+elasticsearch.url: "http://localhost:9200"
+
+
+PUT /vehicles/car/123
+{
+  "mak": "honda",
+  "color": "black",
+  "hp" : 250,
+  "milage": 24000,
+  "price": 19290.98
+}
+
+PUT /klda/sc/123
+  {
+   "FIELD1": "massitech",
+   "FIELD2": "UDBMonitor",
+   "FIELD3": "INFO",
+   "FIELD4": "2017-Nov-21 23:23:54",
+   "FIELD5": "UDBMonitor Log Archive Check",
+   "FIELD6": "[src/UDBMonitor.cpp:884]"
+ }
+ 
+ update > POST /klda/sc/123_UPDATE  > {"doc":{ "FIELD3": "Success", "FIELD7": "[src/UDBMonitor.cpp:884]" }}
+ we can change the "FIELD3": "INFO", to "FIELD3": "Success"
+ as well as introduce new one "FIELD7": "[src/UDBMonitor.cpp:884]"
+ 
+ GET /klda/sc/123/_source
+ 
+ DELETE /klda/sc/123 
+ 
+ you cant delete the type if no document is there. ex if 123 you delete you cant delete sc. u can dellete klda
+ 
+ 
+ GET business/_search > in the hits object all the document array will be there
+ GET business/contract/_search in the hits object all the contract document array will be there
+ GET business/employee/_search in the hits object all the employee document array will be there
+
+ 
+ Term querry
+  GET business/employee/_search 
+  {
+  "query:{
+  "term":{ "name":"honor"}  > searching the name field contain honor
+  }
+  
+  GET business/contract/_search 
+  {
+  "query:{
+  "term":{ "adress":"pen"}  > searching the adress field contain pen
+  }
+  }
+  GET business/contract/_search 
+  {
+  "query:{
+  "match_all":{ }  > searching the adress field contain pen
+  }
+  }
+ 
+ basic structure of index
+mappings will tell integer and string
+settings will tell how many shards,replica will have
+
+PUT /customers/_mappings/online
+{
+"properties" : {
+  "name" : {
+    "type":    "string",
+    "analyzer" : "standard"
+}
+  
+}
+GET /customers/_mappings/instore
+{
+"properties" : {
+    "name" : {
+    "type":    "text",
+    "analyzer" : "standard"
+    },
+    "age" : {
+     "type": "integer"
+    },
+    "total_spent": {
+      "type": "float" 
+    },
+    "is_new": {
+    "type" : "boolean"
+    }
+  }
+}
+
+
+GET /customers/_mappings/online
+{
+"properties" : 
+    {
+  "mapping": {
+    "_join": ["instore", "online"]
+    }
+  }
+}
+
+
+DSL Componetn
+Querry context
+Filter context
+
+Basic querry > match all querry
+GET courses/_search
+{
+"query":{
+	"match_all" : {}
+	}
+}
+
+GET courses/_search
+{
+"query":{
+	"match": {"name": "computer"}
+	}
+}
+
+GET courses/_search
+{
+"query":{
+	"exists": {"field": "professor.email"}
+	}
+}
+ 
+ Search contains 2 words
+ GET courses/_search
+{
+"query":{
+  "bool": {
+    "must": [
+	{"match": {"name": "computer"}},
+	{"match": {"room" : "c8"}}
+	]
+    
+  }
+  
+	}
+}
+
+GET courses/_search
+{
+"query":{
+  "bool": {
+    "must": [
+	{"match": {"name": "computer"}},
+	{"match": {"room" : "c8"}}
+	],
+	"must_not": [
+	{"match": {"professor.name": "bill"}}
+		]	
+      }
+  	}
+}
+
+GET courses/_search
+{
+"query":{ 
+  "bool": {
+    "must": [
+	{"match": {"name": "accounting"}},
+	{"match": {"room" : "c8"}}
+	],
+	"must_not": [
+	{"match": {"professor.name": "bill"}}
+		],
+		"should": [
+		  {"match": {"name": "computer"}}
+		],
+      "minimum_should_match" : 1
+      }
+  	}
+}
+
+below will give the output which work on accounting department and name is accounting
+GET courses/_search
+{
+"query":{
+	"multi_match": {"fields": ["name", "professor.department"],
+	  "query": "accounting"
+	}
+	}
+}
+
+GET courses/_search
+{
+"query":{
+	"match_phrase": {"course_description": "from the business"}
+	}
+}
+
+Partial tokens can be figured out usiong prefix
+GET courses/_search
+{
+"query":{
+	"match_phrase_prefix": {"course_description": "from the business"}
+	}
+}
+
+range querry > gte, lte, gt, lt
+GET courses/_search
+{
+"query":{
+	"range": {"students_enrolled": {
+	  "gte" : 10,
+	  "lte" : 20
+	}
+	 	}
+	}
+}
+GET courses/_search
+{
+"query":{
+	"range": {"course_publish_date": {
+	  "gt" : "2014-05-14"
+	  
+	}
+	 	}
+	}
+}
+
+
+GET courses/_search
+{
+"query":{ 
+  "bool": {
+    "must": [
+	{"match": {"name": "accounting"}}],
+	"must_not": [
+	{"match": {"room" : "c8"}}
+		],
+		"should": [
+		{"range": {"students_enrolled": {"gte" : 10,"lte" : 20 }}}]
+  	}
+}
+}
+
+GET courses/_search
+{
+"query":{ 
+  "bool": {
+    "must": [
+	{"match": {"name": "accounting"}}],
+	"must_not": [
+	{"match": {"room" : "c8"}}
+		],
+		"should": [
+		{"range": {"students_enrolled": {"gte" : 10,"lte" : 20 }}}],"minimum_should_match": 1
+  	}
+}
+}
+
+Filter > dont do scoring
+GET courses/_search
+{
+"query":{
+  "bool": { 
+    "filter" : {
+	    "match" : {"name" : "accounting"}
+	}
+}
+}
+}
+
+GET courses/_search
+{
+"query":{"bool": { "filter" : { "bool": { "must" : [
+	      {"match" : {"professor.name" : "bill"}},
+	      {"match" : {"name" : "accounting"}}],
+	      "must_not":[{"match" :{"room": "e7"}}] }}}}}}
+		  
+		  
+		  
+GET /vehicles/cars/_search
+{
+"from":0,
+"size": 6, 
+"query": {"match_all": {}}, 
+"sort": [
+  {
+    "price": {"order": "desc"
+    }
+  }
+]
+	}
+}
+
+GET /vehicles/cars/_count
+{
+  
+"query": {
+      "match" : {"make" : "dodge"}
+	}
+
+  
+}
+
+Popular cars using aggs
+GET /vehicles/cars/_search
+{
+  
+"aggs": {
+      "popular_cars" : {"terms" : {  "field": "make.keyword"}}
+	}
+}
+GET /vehicles/cars/_search
+{
+
+	"aggs": {
+	  "avg_price": {
+	    "avg": {"field": "price"}
+	    
+	  }}}
+	  
+	  
+GET /vehicles/cars/_search
+{
+  "aggs": {
+      "popular_cars" : {"terms" : {  "field": "make.keyword"}},
+       "avg_price": {"avg": {"field": "price"}},
+	      "max_price" : { "max": {"field": "price"}}}
+	  
+	}}}}}
+	
+
+
+	GET /vehicles/cars/_search
+{
+    "aggs" : {
+        "popular_cars" : {
+            "terms" : {
+                "field" : "make.keyword"
+            },
+            "aggs" : {
+                "min_price" : { "min" : { "field" : "price" } }
+            }
+        }
+    }
+}
+
+GET /vehicles/cars/_search
+{
+  "query":{"match": {"color":"red"}
+},
+    "aggs" : {
+        "popular_cars" : {
+            "terms" : {
+                "field" : "make.keyword"
+            },
+            "aggs" : {
+                "min_price" : { "min" : { "field" : "price" } }
+            }
+        }
+    }
+}
+
+GET /vehicles/cars/_search
+{ 
+    "aggs" : {
+        "popular_cars" : { "terms" : { "field" : "make.keyword" },
+            "aggs" : {
+                "stats_on_price" : { "stats" : { "field" : "price" } }
+            }
+        }
+    }
+}
+GET /vehicles/cars/_search
+{ 
+"aggs" : { "popular_cars" : {"terms" : {"field" : "make.keyword" },
+  "aggs" : {"sold_date_range" : { "range" : { "field" : "sold", "ranges": [{"from": "2016-01-01", "to": "2016-05-18"}, {"from": "2016-05-18", "to": "2017-05-18"}]}
+    
+  }
+            }
+        }
+    }
+}
+
+GET /vehicles/cars/_search
+{ 
+"aggs" : { "popular_cars" : {"terms" : {"field" : "make.keyword" },
+  "aggs" : {"sold_date_range" : { "range" : { "field" : "sold", "ranges": [{"from": "2016-01-01", "to": "2016-05-18"}, {"from": "2016-05-18", "to": "2017-05-18"}]},"aggs" : {
+                "stats_on_price" : { "stats" : { "field" : "price" } } }
+    
+  }
+            
+        }
+    }
+}}
+
+GET /vehicles/cars/_search
+{ 
+"aggs" : { "car_condition" : {"terms" : {"field" : "condition.keyword" },
+  "aggs" : { "avg_price" : {"avg" : {"field" : "price" }     }, 
+  "make" : {
+            "terms" : {
+                "field" : "make.keyword"}}
+  
+
+        }
+    }
+}}
+https://stackoverflow.com/questions/18449703/elasticsearch-group-by-multiple-fields
+GET /vehicles/cars/_search
+{ 
+"aggs" : { "car_condition" : {"terms" : {"field" : "condition.keyword" },
+  "aggs" : { "avg_price" : {"avg" : {"field" : "price" }}, 
+    "make" : {
+            "terms" : {
+                "field" : "make.keyword"},
+         "aggs" : 
+            {"min_price" : {"min" : {"field" : "price" }},
+           "max_price" : {"max" : {"field" : "price" }}
+      
+  }     }   }}}}}
+  
+  ===================================
+   bin/logstash -f /home/elk/elastico/data/logstash_sc.config
+
+   [elk@Sclient3 data]$ cat logstash_sc.config
+input {
+        file {
+                path => "/home/elk/elastico/data/klda.csv"
+                start_position => "beginning"
+                sincedb_path => "/dev/null"
+}
+}
+
+filter{
+        csv {
+                separator => ","
+                columns => ["name","type","category","date","error_log"]
+}
+}
+
+output {
+        elasticsearch   {
+                hosts => "localhost"
+                index => "klda"
+                document_type => "category"
+}
+
+        stdout{}
+}
+
+  

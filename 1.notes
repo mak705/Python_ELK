@@ -1,0 +1,100 @@
+https://stackoverflow.com/questions/29166774/count-number-of-sentences-in-paragraph
+
+Download Elastic search, Kibana from the https://www.elastic.co/downloads
+
+download tar.gz file and untar
+tar -xvf elasticsearch-6.2.3.tar.gz
+tar -xvf kibana-6.2.3-linux-x86_64.tar.gz
+
+Rename for ease to use
+mv elasticsearch-6.2.3 elasticsearch 
+mv kibana-6.2.3-linux-x86_64 kibana
+
+go to folder /home/elk/elasticsearch
+start elasticsearch bin/elasticsearch
+if you want to run in background
+nohup bin/elasticsearch &
+
+verify its running > response come from elastic cluster
+[elk@mak]$ curl http://localhost:9200
+{
+  "name" : "Doctor Droom",
+  "cluster_name" : "elasticsearch",
+  "cluster_uuid" : "OPAWauZcQ0iYMZoD3YHN-w",
+  "version" : {
+    "number" : "2.4.6",
+    "build_hash" : "5376dca9f70f3abef96a77f4bb22720ace8240fd",
+    "build_timestamp" : "2017-07-18T12:17:44Z",
+    "build_snapshot" : false,
+    "lucene_version" : "5.5.4"
+  },
+  "tagline" : "You Know, for Search"
+}
+
+or hit in the browser
+http://localhost:9200/
+
+start kibana
+$ cd /home/elk/kibana/config
+$ vim kibana.yml
+ uncomment elasticsearch.url: "http://localhost:9200"
+
+$cd /home/elk/kibana
+$nohup bin/kibana &
+
+$http://localhost:5601/
+
+
+install logstash
+tar -xvf logstash-6.2.3.tar.gz
+rename to logstash for ease to use
+
+
+
+nohup bin/logstash -f /home/elk/data/logstash_car.config &
+
+
+input {
+        file {
+                path => "/home/elk/data/car.csv"
+                start_position => "beginning"
+                sincedb_path => "/dev/null"
+}
+}
+
+filter{
+        csv {
+                separator => ","
+                columns => ["maker","model","mileage","manufacture_year","engine_displacement","engine_power","body_type","color_slug","stk_year","transmission","door_count","seat_count","fuel_type","date_created","date_last_seen","price_eur"]
+}
+        mutate {convert => ["mileage", "integer"]}
+        mutate {convert => ["price_eur", "float"]}
+        mutate {convert => ["engine_power", "integer"]}
+        mutate {convert => ["door_count", "integer"]}
+        mutate {convert => ["seat_count", "integer"]}
+}
+
+output {
+        elasticsearch   {
+                hosts => "localhost"
+                index => "cars"
+                document_type => "sold_cars"
+}
+
+        stdout{}
+}
+
+car.csv
+maker,model,mileage,manufacture_year,engine_displacement,engine_power,body_type,color_slug,stk_year,transmission,door_count,seat_count,fuel_type,date_created,date_last_seen,price_eur
+ford,galaxy,151000,2011,2000,103,,,None,man,5,7,diesel,2015-11-14 18:10:06.838319+00,2016-01-27 20:40:15.46361+00,10584.75
+skoda,octavia,143476,2012,2000,81,,,None,man,5,5,diesel,2015-11-14 18:10:06.853411+00,2016-01-27 20:40:15.46361+00,8882.31
+bmw,,97676,2010,1995,85,,,None,man,5,5,diesel,2015-11-14 18:10:06.861792+00,2016-01-27 20:40:15.46361+00,12065.06
+skoda,fabia,111970,2004,1200,47,,,None,man,5,5,gasoline,2015-11-14 18:10:06.872313+00,2016-01-27 20:40:15.46361+00,2960.77
+skoda,fabia,128886,2004,1200,47,,,None,man,5,5,gasoline,2015-11-14 18:10:06.880335+00,2016-01-27 20:40:15.46361+00,2738.71
+
+
+http://elasticserver.com:9200/applogs/_search?q=*
+http://localhost:9200/_cat/indices?v
+
+
+
