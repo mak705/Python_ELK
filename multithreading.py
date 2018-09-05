@@ -1,6 +1,10 @@
  import urllib.request
  import urllib.parse
  from bs4 import BeautifulSoup
+ import time 
+ import os
+ import timeit
+ from joblib import Parallel, delayed
  url = 'https://health.usnews.com/doctors/new-jersey'
  #data = data.encode('utf-8')
  headers = {}
