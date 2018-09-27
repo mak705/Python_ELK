@@ -14,17 +14,17 @@ PUT /vehicles/car/123
 
 PUT /klda/sc/123
   {
-   "FIELD1": "massitech",
-   "FIELD2": "UDBMonitor",
+   "FIELD1": "TECH",
+   "FIELD2": "Moni",
    "FIELD3": "INFO",
    "FIELD4": "2017-Nov-21 23:23:54",
-   "FIELD5": "UDBMonitor Log Archive Check",
-   "FIELD6": "[src/UDBMonitor.cpp:884]"
+   "FIELD5": "Log Archive Check",
+   "FIELD6": "[src.cpp:884]"
  }
  
- update > POST /klda/sc/123_UPDATE  > {"doc":{ "FIELD3": "Success", "FIELD7": "[src/UDBMonitor.cpp:884]" }}
+ update > POST /klda/sc/123_UPDATE  > {"doc":{ "FIELD3": "Success", "FIELD7": "[Monitor.cpp:884]" }}
  we can change the "FIELD3": "INFO", to "FIELD3": "Success"
- as well as introduce new one "FIELD7": "[src/UDBMonitor.cpp:884]"
+ as well as introduce new one "FIELD7": "[Monitor.cpp:884]"
  
  GET /klda/sc/123/_source
  
