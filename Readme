@@ -1,3 +1,6 @@
 1. Scrape the data
-2. Convert to json
-3. Put in ELK or COnvert to DF so that we can do analytics
+2. Convert to dictionary
+3.Put in Pandas Datafram
+
+ELK
+4. Inject the content into elastic search working on this
